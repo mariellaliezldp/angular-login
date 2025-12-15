@@ -1,14 +1,14 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+    // {
+    //     path: '',
+    //     loadComponent: () =>
+    //         import('./components/layout/layout')
+    //             .then(module => module.Layout)
+    // },
     {
         path: '',
-        loadComponent: () =>
-            import('./components/layout/layout')
-                .then(module => module.Layout)
-    },
-    {
-        path: 'register',
         loadComponent: () =>
             import('./components/register/register')
                 .then(module => module.Register)
