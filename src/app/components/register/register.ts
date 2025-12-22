@@ -8,13 +8,13 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UserRegister } from '../../model/user.model';
+import { UserService } from '../../services/user';
 
 type RegisterForm = FormGroup<{
-  firstName: FormControl<string>;
-  lastName: FormControl<string>;
-  email: FormControl<string>;
+  fullName: FormControl<string>;
+  emailId: FormControl<string>;
   password: FormControl<string>;
-  confirmPassword: FormControl<string>;
   acceptTerms: FormControl<boolean>;
 }>;
 
@@ -31,15 +31,11 @@ export class Register {
 
   registerForm: RegisterForm = this.builder.group(
     {
-      firstName: this.builder.control('', {
+      fullName: this.builder.control('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      lastName: this.builder.control('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      email: this.builder.control('', {
+      emailId: this.builder.control('', {
         nonNullable: true,
         validators: [Validators.required, Validators.email],
       }),
@@ -52,16 +48,11 @@ export class Register {
           ),
         ],
       }),
-      confirmPassword: this.builder.control('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
       acceptTerms: this.builder.control(false, {
         nonNullable: true,
         validators: [Validators.requiredTrue],
       }),
     },
-    { validators: this.passwordsMatchValidator }
   );
 
   // Helper method for template
@@ -78,27 +69,11 @@ export class Register {
     return control.invalid && (control.touched);
   }
 
-  proceedRegistration() {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
-      this.snackBar.open('Please fix the errors in the form.', 'Close', {
-        duration: 3000,
-      });
-      return;
-    }
-
-    this.snackBar.open('Registration successful!', 'Close', { duration: 3000 });
-    console.log(this.registerForm.value);
-    this.resetForm();
-  }
-
   resetForm() {
     this.registerForm.reset({
-      firstName: '',
-      lastName: '',
-      email: '',
+      fullName: '',
+      emailId: '',
       password: '',
-      confirmPassword: '',
       acceptTerms: false,
     });
 
@@ -107,9 +82,29 @@ export class Register {
     this.registerForm.updateValueAndValidity();
   }
 
-  private passwordsMatchValidator(group: FormGroup) {
-    const pass = group.get('password')?.value;
-    const confirm = group.get('confirmPassword')?.value;
-    return pass === confirm ? null : { passwordMismatch: true };
+  // how do we create an obj, we have created a class/interface
+  // and here we have created data type of ths variable
+  // and we are initializing thet class
+  // class > data type > initialize
+  // registerObj: UserRegister = new UserRegister(); for ngModel
+
+  userService = inject(UserService);
+
+  onRegister() {
+    if(this.registerForm.invalid){
+      this.registerForm.markAllAsTouched();
+      this.snackBar.open('Please fix the errors in the form.', 'Close', {
+        duration: 3000,
+      });
+      return;
+    }
+    const payload: UserRegister = this.registerForm.getRawValue();
+
+    this.userService.registerUser(payload).subscribe({
+      next: () => {
+        this.snackBar.open('Registration successful!', 'Close', { duration: 3000 });
+        this.resetForm();
+      }
+    });
   }
 }
