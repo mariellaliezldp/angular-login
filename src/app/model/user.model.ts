@@ -1,6 +1,6 @@
 export class UserRegister {
     userId?: number;
-    emailId: string;
+    email: string;
     fullName: string;
     password: string;
 
@@ -8,18 +8,18 @@ export class UserRegister {
     // we created classof it
     constructor() {
         this.userId = 0;
-        this.emailId = '';
+        this.email = '';
         this.fullName = '';
         this.password = '';
     }
 }
 
 export class LoginModel {
-    emailId: string;
+    email: string;
     password: string;
 
     constructor() {
-        this.emailId = '';
+        this.email = '';
         this.password = '';
     }
 }

@@ -9,10 +9,9 @@ import {
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgIf } from '@angular/common';
 import { UserService } from '../../services/user';
-import { LoginModel } from '../../model/user.model';
 
 type LoginForm = FormGroup<{
-  emailId: FormControl<string>;
+  email: FormControl<string>;
   password: FormControl<string>;
   rememberMe: FormControl<boolean>;
 }>;
@@ -25,20 +24,20 @@ type LoginForm = FormGroup<{
   styleUrl: './login.css',
 })
 export class Login {
-  private builder = inject(FormBuilder);
+  private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
   private userService = inject(UserService);
 
-  loginForm: LoginForm = this.builder.group({
-    emailId: this.builder.control('', {
+  loginForm: LoginForm = this.fb.group({
+    email: this.fb.control('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
-    password: this.builder.control('', {
+    password: this.fb.control('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    rememberMe: this.builder.control(false, {
+    rememberMe: this.fb.control(false, {
       nonNullable: true,
     }),
   });
@@ -54,43 +53,33 @@ export class Login {
     return control.invalid && control.touched;
   }
 
-  onLogin(): void {
+  async onLogin(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.snackBar.open('Please fix errors in the form.', 'Close', {
+      this.snackBar.open('Please fix errors in form', 'Close', {
         duration: 3000,
-      });
-      return;
+      })
+      return
     }
 
-    // Send ONLY what backend expects
-    const { emailId, password } = this.loginForm.getRawValue();
-    const payload: LoginModel = { emailId, password };
+    const { email, password } = this.loginForm.getRawValue()
 
-    this.userService.loginUser(payload).subscribe({
-      next: () => {
-        this.snackBar.open('Login successful', 'Close', {
-          duration: 3000,
-        });
-        this.resetForm();
-      },
-      error: (err) => {
-        if (err?.status === 401) {
-          this.snackBar.open('Invalid email or password', 'Close', {
-            duration: 3000,
-          });
-        } else {
-          this.snackBar.open('Something went wrong. Please try again.', 'Close', {
-            duration: 3000,
-          });
-        }
-      },
-    });
+    try {
+      await this.userService.loginWithEmail(email.trim(), password.trim());
+      this.snackBar.open('Login successful', 'Close', { duration: 3000 });
+      this.resetForm();
+    } catch (error: any) {
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        this.snackBar.open('Invalid email or password', 'Close', { duration: 3000 })
+      } else {
+        this.snackBar.open('Something went wrong. Please try again', 'Close', { duration: 3000 })
+      }
+    }
   }
 
   resetForm(): void {
     this.loginForm.reset({
-      emailId: '',
+      email: '',
       password: '',
       rememberMe: false,
     });

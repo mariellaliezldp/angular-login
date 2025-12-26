@@ -1,3 +1,4 @@
+import { UserService } from './../../services/user';
 import { NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import {
@@ -9,11 +10,10 @@ import {
 } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { UserRegister } from '../../model/user.model';
-import { UserService } from '../../services/user';
 
 type RegisterForm = FormGroup<{
   fullName: FormControl<string>;
-  emailId: FormControl<string>;
+  email: FormControl<string>;
   password: FormControl<string>;
   acceptTerms: FormControl<boolean>;
 }>;
@@ -26,20 +26,21 @@ type RegisterForm = FormGroup<{
   styleUrl: './register.css',
 })
 export class Register {
-  private builder = inject(FormBuilder);
+  private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
+  private userService = inject(UserService)
 
-  registerForm: RegisterForm = this.builder.group(
+  registerForm: RegisterForm = this.fb.group(
     {
-      fullName: this.builder.control('', {
+      fullName: this.fb.control('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      emailId: this.builder.control('', {
+      email: this.fb.control('', {
         nonNullable: true,
         validators: [Validators.required, Validators.email],
       }),
-      password: this.builder.control('', {
+      password: this.fb.control('', {
         nonNullable: true,
         validators: [
           Validators.required,
@@ -48,7 +49,7 @@ export class Register {
           ),
         ],
       }),
-      acceptTerms: this.builder.control(false, {
+      acceptTerms: this.fb.control(false, {
         nonNullable: true,
         validators: [Validators.requiredTrue],
       }),
@@ -69,10 +70,54 @@ export class Register {
     return control.invalid && (control.touched);
   }
 
-  resetForm() {
+  // how do we create an obj, we have created a class/interface
+  // and here we have created data type of ths variable
+  // and we are initializing thet class
+  // class > data type > initialize
+  // registerObj: UserRegister = new UserRegister(); for ngModel
+
+
+//   onRegister() {
+//     if (this.registerForm.invalid) {
+//       this.registerForm.markAllAsTouched();
+//       this.snackBar.open('Please fix the errors in the form.', 'Close', {
+//         duration: 3000,
+//       });
+//       return;
+//     }
+//     const payload: UserRegister = this.registerForm.getRawValue();
+
+//     this.userService.registerUser(payload).subscribe({
+//       next: () => {
+//         this.snackBar.open('Registration successful!', 'Close', { duration: 3000 });
+//         this.resetForm();
+//       }
+//     });
+//   }
+// }
+
+  async onRegister(): Promise<void> {
+    if(this.registerForm.invalid){
+      this.registerForm.markAllAsTouched();
+      this.snackBar.open('Please fix errors in form', 'Close', { duration: 3000 })
+    return
+    }
+    
+    const { email, password } = this.registerForm.getRawValue()
+
+    try {
+      await this.userService.registerWithEmail(email, password);
+      this.snackBar.open('Register successfully', 'Close', { duration: 3000 })
+      this.resetForm()
+    } catch (error: any) {
+      this.snackBar.open('Something went wrong', 'Close', { duration: 3000})
+    }
+  }
+
+    resetForm() {
     this.registerForm.reset({
       fullName: '',
-      emailId: '',
+      email: '',
       password: '',
       acceptTerms: false,
     });
@@ -80,31 +125,5 @@ export class Register {
     this.registerForm.markAsPristine();
     this.registerForm.markAsUntouched();
     this.registerForm.updateValueAndValidity();
-  }
-
-  // how do we create an obj, we have created a class/interface
-  // and here we have created data type of ths variable
-  // and we are initializing thet class
-  // class > data type > initialize
-  // registerObj: UserRegister = new UserRegister(); for ngModel
-
-  userService = inject(UserService);
-
-  onRegister() {
-    if(this.registerForm.invalid){
-      this.registerForm.markAllAsTouched();
-      this.snackBar.open('Please fix the errors in the form.', 'Close', {
-        duration: 3000,
-      });
-      return;
-    }
-    const payload: UserRegister = this.registerForm.getRawValue();
-
-    this.userService.registerUser(payload).subscribe({
-      next: () => {
-        this.snackBar.open('Registration successful!', 'Close', { duration: 3000 });
-        this.resetForm();
-      }
-    });
   }
 }
