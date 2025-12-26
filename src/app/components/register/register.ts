@@ -9,7 +9,7 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { UserRegister } from '../../model/user.model';
+import { Router } from '@angular/router';
 
 type RegisterForm = FormGroup<{
   fullName: FormControl<string>;
@@ -29,6 +29,7 @@ export class Register {
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
   private userService = inject(UserService)
+  private router = inject(Router)
 
   registerForm: RegisterForm = this.fb.group(
     {
@@ -108,6 +109,7 @@ export class Register {
     try {
       await this.userService.registerWithEmail(email, password);
       this.snackBar.open('Register successfully', 'Close', { duration: 3000 })
+      this.router.navigate(['/login'])
       this.resetForm()
     } catch (error: any) {
       this.snackBar.open('Something went wrong', 'Close', { duration: 3000})
